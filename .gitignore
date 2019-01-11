@@ -62,4 +62,7 @@ typings/
 
 # keyfiles
 config/auth.js
+config/auth-bak.js
 config/database.js
+config/database-bak.js
+views/confirm2fa.ejs

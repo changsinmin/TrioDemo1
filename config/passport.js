@@ -113,13 +113,14 @@ module.exports = function (passport) {
               field2: 1,
               field3: true
             };
+            const challenge_msg = '1a2b';
+            const challenge_success = challenge_msg + ':YES';
             const auth_info = {
               account: email,
               timestamp: Math.trunc(Date.now()/1000),
-              // challenge: '1a2b',
-              challenge: 'jiVnc6u1ax',
-              msg: 'Hello',
-              options: ['YES','NO'],
+              challenge: challenge_msg,
+              msg: 'Test',
+              options: ['Good','Bad'],
               payload: JSON.stringify(sample_data)
             };
             var shaObj = new jsSHA("SHA-1", "TEXT");
@@ -134,12 +135,13 @@ module.exports = function (passport) {
             {
               version: 'v3',
               id: configAuth.trioIkey,
-              auth_req: JSON.stringify(auth_request)
+              // auth_req: JSON.stringify(auth_request)
+              auth_req: auth_request
             };
 
-            console.log(body);
+            console.log('JSON.stringify(body): -> ', JSON.stringify(body));
 
-            fetch('https://api.ix-security.com/api/authentications/request', {
+            fetch('https://auth.ix-security.com/auth/request', {
               method: 'post',
               body:    JSON.stringify(body),
               headers: { 'Content-Type': 'application/json' },
@@ -149,22 +151,22 @@ module.exports = function (passport) {
               console.log('Response -> ');
               console.log(json);
               const msg = Buffer.from('1a2b:YES','utf8');
-              console.log(msg);
+              // console.log(msg);
               const hashedmsg = crypto.createHash('sha256').update(msg).digest();
-              console.log(hashedmsg);
+              // console.log(hashedmsg);
               const hashMsg = sha256(hashedmsg);
-              console.log(hashMsg);
+              // console.log(hashMsg);
 
-              const keyBuf = Buffer.from(json.auth_response.data.key,'hex');
-              console.log(json.auth_response.data.extraAck);
-              let signatureBuffer = Buffer.from(json.auth_response.data.extraAck, 'hex');
+              // const keyBuf = Buffer.from(json.auth_response.data.key,'hex');
+              // console.log(json.auth_response.data.extraAck);
+              // let signatureBuffer = Buffer.from(json.auth_response.data.extraAck, 'hex');
               // console.log(signatureBufferDER);
               // let signatureBuffer = secp256k1.signatureImport(signatureBufferDER);
-              let normalizedSigBuf = secp256k1.signatureNormalize(signatureBuffer);
-              console.log('Normalized Signature:', normalizedSigBuf);
-              console.log(secp256k1.verify(hashMsg, normalizedSigBuf, keyBuf));
-              // if (!json.auth_response.data.message)
-                // return done(null, false, req.flash('loginMessage', 'Oops! 2FA not Successful.')); // Success: false from 2FA
+              // let normalizedSigBuf = secp256k1.signatureNormalize(signatureBuffer);
+              // console.log('Normalized Signature:', normalizedSigBuf);
+              // console.log(secp256k1.verify(hashMsg, normalizedSigBuf, keyBuf));
+              if (!(json.auth_response.data.message===challenge_success))
+                return done(null, false, req.flash('loginMessage', 'Oops! 2FA not Successful.')); // Success: false from 2FA
               return done(null, user);
             })
             .catch(err => {
